@@ -1,0 +1,33 @@
+# ---------- .NET ----------
+bin/
+obj/
+*.user
+*.suo
+
+# Local SQLite database (recreated by migrations + seeder)
+*.db
+*.db-shm
+*.db-wal
+
+# ---------- Node / Next.js ----------
+node_modules/
+.next/
+out/
+.turbo/
+npm-debug.log*
+yarn-error.log*
+
+# ---------- Env ----------
+.env
+.env.local
+.env.*.local
+
+# ---------- Editors / OS ----------
+.vs/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+*.db.bak*
