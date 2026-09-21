@@ -18,13 +18,18 @@ const string CorsPolicy = "FitPulseFrontend";
 
 // ---------- Persistence ----------
 var provider = builder.Configuration.GetValue("Database:Provider", "Sqlite")!;
-builder.Services.AddDbContext<AppDbContext>(options =>
+if (provider.Equals("Postgres", StringComparison.OrdinalIgnoreCase))
 {
-    if (provider.Equals("Postgres", StringComparison.OrdinalIgnoreCase))
-        options.UseNpgsql(builder.Configuration.GetConnectionString("Postgres"));
-    else
-        options.UseSqlite(builder.Configuration.GetConnectionString("Sqlite"));
-});
+    var postgres = PostgresConnection.Normalize(builder.Configuration.GetConnectionString("Postgres"));
+    builder.Services.AddDbContext<PostgresAppDbContext>(options => options.UseNpgsql(postgres));
+    // Everything else asks for AppDbContext; hand it the Postgres flavour (same model, own migrations).
+    builder.Services.AddScoped<AppDbContext>(sp => sp.GetRequiredService<PostgresAppDbContext>());
+}
+else
+{
+    builder.Services.AddDbContext<AppDbContext>(options =>
+        options.UseSqlite(builder.Configuration.GetConnectionString("Sqlite")));
+}
 
 // ---------- Auth ----------
 builder.Services.Configure<JwtOptions>(builder.Configuration.GetSection(JwtOptions.SectionName));
@@ -130,6 +135,13 @@ using (var scope = app.Services.CreateScope())
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     var logger = scope.ServiceProvider.GetRequiredService<ILoggerFactory>().CreateLogger("Startup");
     await db.Database.MigrateAsync();
+    if (db.Database.IsNpgsql())
+    {
+        // The app stores Thai text; a non-UTF8 database silently rejects some characters (audit rows are skipped).
+        var encoding = (await db.Database.SqlQueryRaw<string>("SELECT current_setting('server_encoding') AS \"Value\"").ToListAsync()).First();
+        if (!encoding.Equals("UTF8", StringComparison.OrdinalIgnoreCase))
+            logger.LogWarning("PostgreSQL server_encoding is {Encoding}, not UTF8. Create the database with UTF8 encoding.", encoding);
+    }
     if (app.Configuration.GetValue("Seed:DemoData", app.Environment.IsDevelopment()))
     {
         await DbSeeder.SeedAsync(db, app.Configuration, logger);

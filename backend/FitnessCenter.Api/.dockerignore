@@ -1,0 +1,12 @@
+bin/
+obj/
+*.db
+*.db-shm
+*.db-wal
+*.db.bak*
+*.log
+Dockerfile
+.dockerignore
+# Development-only settings carry a throw-away signing key and the demo password; never ship them in an image.
+appsettings.Development.json
+Properties/launchSettings.json

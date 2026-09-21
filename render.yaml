@@ -1,0 +1,40 @@
+# Render Blueprint: the API (Docker) plus its PostgreSQL database.
+# Render dashboard -> New -> Blueprint -> pick this repository. Values marked `sync: false` are asked for once.
+# The web app lives on Vercel (root directory "frontend"), not here.
+
+databases:
+  - name: tpfitness-db
+    databaseName: tpfitness
+    user: tpfitness
+    plan: free   # small trial tier; check Render's current limits and move to a paid plan before real customers
+
+services:
+  - type: web
+    name: tpfitness-api
+    runtime: docker
+    plan: free   # a free web service sleeps when idle, so the first request after a pause is slow
+    dockerfilePath: ./backend/FitnessCenter.Api/Dockerfile
+    dockerContext: ./backend/FitnessCenter.Api
+    healthCheckPath: /health
+    envVars:
+      - key: Database__Provider
+        value: Postgres
+      - key: ConnectionStrings__Postgres
+        fromDatabase:
+          name: tpfitness-db
+          property: connectionString
+      - key: Jwt__Key
+        generateValue: true          # random secret; the API refuses to start without one
+      - key: Cors__AllowedOrigins__0
+        sync: false                  # your Vercel address, e.g. https://tpfitness.vercel.app
+      - key: Seed__AdminEmail
+        sync: false                  # creates the first administrator when the database is empty
+      - key: Seed__AdminPassword
+        sync: false                  # 12+ characters; remove this variable after the first start
+      # --- Public DEMO site only (leave these out for real customers) -----------------------------------
+      # - key: Seed__DemoData
+      #   value: "true"              # demo accounts, branches and a class timetable
+      # - key: Seed__DefaultPassword
+      #   sync: false                # password for the demo accounts
+      # - key: Payments__AllowSimulated
+      #   value: "true"              # checkout is a simulation: nobody is charged

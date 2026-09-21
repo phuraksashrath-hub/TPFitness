@@ -34,10 +34,10 @@ public class FacilityService : IFacilityService
 
         if (!string.IsNullOrWhiteSpace(search))
         {
-            var term = search.Trim();
-            query = query.Where(e => EF.Functions.Like(e.Name, $"%{term}%")
-                                  || EF.Functions.Like(e.SerialNumber, $"%{term}%")
-                                  || EF.Functions.Like(e.Category, $"%{term}%"));
+            var term = search.Trim().ToLowerInvariant();
+            query = query.Where(e => e.Name.ToLower().Contains(term)
+                                  || e.SerialNumber.ToLower().Contains(term)
+                                  || e.Category.ToLower().Contains(term));
         }
 
         if (status.HasValue)

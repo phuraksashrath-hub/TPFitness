@@ -72,9 +72,9 @@ public class BranchesController : ControllerBase
     private static IQueryable<Branch> ApplySearch(IQueryable<Branch> query, string? search)
     {
         if (string.IsNullOrWhiteSpace(search)) return query;
-        var term = $"%{search.Trim()}%";
-        return query.Where(b => EF.Functions.Like(b.Name, term) || EF.Functions.Like(b.District, term) ||
-                                EF.Functions.Like(b.Province, term) || EF.Functions.Like(b.Address, term));
+        var term = search.Trim().ToLowerInvariant();
+        return query.Where(b => b.Name.ToLower().Contains(term) || b.District.ToLower().Contains(term) ||
+                                b.Province.ToLower().Contains(term) || b.Address.ToLower().Contains(term));
     }
 
     private async Task EnsureNameIsFreeAsync(string name, int? excludeId, CancellationToken ct)

@@ -214,12 +214,19 @@ NEXT_PUBLIC_API_BASE_URL=http://localhost:5080
 
 ### Switching to PostgreSQL
 
-1. Set `Database:Provider` to `Postgres` and fill in `ConnectionStrings:Postgres`.
-2. Regenerate the migration for the Npgsql provider:
-   ```powershell
-   dotnet ef migrations remove
-   dotnet ef migrations add InitialCreate -o Data/Migrations
-   ```
+SQLite and PostgreSQL each have their own migration history, because migrations contain provider-specific
+column types: `Data/Migrations` (SQLite) and `Data/MigrationsPostgres` (`PostgresAppDbContext`, same model).
+Set `Database__Provider=Postgres` and `ConnectionStrings__Postgres`; the API applies the right set on start-up.
+The connection string may be a normal key/value string or a hosting URI (`postgres://user:pass@host:5432/db`).
+The database must use **UTF-8** (the default on hosted Postgres); the API logs a warning if it does not.
+
+After changing the model, add a migration to **both** sets:
+
+```powershell
+cd backend/FitnessCenter.Api
+dotnet ef migrations add <Name> -o Data/Migrations                                            # SQLite
+dotnet ef migrations add <Name> --context PostgresAppDbContext -o Data/MigrationsPostgres     # PostgreSQL
+```
 
 ---
 
@@ -259,6 +266,38 @@ Copy `frontend/.env.production.example` to `.env.production`, set `NEXT_PUBLIC_A
 **https** address, then `npm run build && npm run start`. These values are compiled in, so changing them needs a rebuild.
 Serve both over HTTPS: a phone will block an https page that calls an http API.
 
+### Deploy: Vercel (web) + Render (API and database)
+
+Vercel hosts only the Next.js app. The .NET API and its database run elsewhere; this repository ships a
+`Dockerfile` and a [`render.yaml`](render.yaml) for **Render**, but any host that runs a Docker image and offers
+PostgreSQL works the same way (set the variables from the table above).
+
+1. **Push the repository to GitHub** (`frontend/` must be plain folders in this repo, not a nested git repository).
+2. **API + database on Render:** New → Blueprint → select the repository. Fill the three prompted values:
+   `Cors__AllowedOrigins__0` (put a placeholder such as `https://example.com` for now), `Seed__AdminEmail`,
+   `Seed__AdminPassword` (12+ characters). Render builds the image, creates PostgreSQL, applies the migrations and
+   creates the first administrator. Check `https://<your-api>.onrender.com/health`.
+   If you create the service by hand instead of using the Blueprint: runtime Docker, Dockerfile path
+   `backend/FitnessCenter.Api/Dockerfile`, Docker context `backend/FitnessCenter.Api`, health check path `/health`.
+3. **Web on Vercel:** Add New → Project → import the repository, set **Root Directory = `frontend`**, and add
+   the environment variable `NEXT_PUBLIC_API_BASE_URL=https://<your-api>.onrender.com`. Deploy.
+4. **Close the loop:** copy the Vercel address (e.g. `https://tpfitness.vercel.app`) into the API's
+   `Cors__AllowedOrigins__0` and redeploy the API. Only that exact origin is allowed, so the address is the
+   production domain, not the per-deployment preview URLs (previews will fail CORS unless added as
+   `Cors__AllowedOrigins__1`, `__2`, ...).
+5. Sign in at `/login` with the administrator you created, then add plans, trainers, branches and classes from the
+   admin portal. A fresh production database is empty on purpose.
+
+For a **public demo** instead (demo accounts, sample data, simulated checkout), also set on the API
+`Seed__DemoData=true`, `Seed__DefaultPassword=<a password>` and `Payments__AllowSimulated=true` (they are the
+commented block in `render.yaml`), and on Vercel `NEXT_PUBLIC_DEMO_LOGIN=true` plus `NEXT_PUBLIC_DEMO_PASSWORD`
+with the same password. Then anyone can sign in with the demo accounts and change data, so do not put real
+personal data into a demo site.
+
+Free tiers (Render web service and database, Vercel Hobby) have limits such as sleeping when idle, a
+database that expires, and non-commercial-use terms. Check each provider's current terms and pricing before
+relying on them.
+
 ### Before real customers use it
 
 These are decisions and content, not code, so they are **not** done:
@@ -277,7 +316,6 @@ These are decisions and content, not code, so they are **not** done:
    "FitPulse" name. Seeded avatars load from `i.pravatar.cc` (demo data only).
 6. No password reset or e-mail verification yet; the session token lives in `localStorage` (8 h) and no
    Content-Security-Policy is set. Plan these with the hosting setup.
-7. Moving from SQLite to PostgreSQL means regenerating the migrations for the Npgsql provider (see above).
 
 ---
 

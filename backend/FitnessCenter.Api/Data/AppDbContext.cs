@@ -8,6 +8,9 @@ public class AppDbContext : DbContext
 {
     public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
 
+    /// <summary>For provider-specific subclasses, which exist only to own their own migration history.</summary>
+    protected AppDbContext(DbContextOptions options) : base(options) { }
+
     public DbSet<User> Users => Set<User>();
     public DbSet<Member> Members => Set<Member>();
     public DbSet<Trainer> Trainers => Set<Trainer>();

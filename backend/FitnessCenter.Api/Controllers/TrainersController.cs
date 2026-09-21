@@ -30,7 +30,10 @@ public class TrainersController : ControllerBase
         var query = _db.Trainers.Where(t => t.Status == UserStatus.ACTIVE);
 
         if (!string.IsNullOrWhiteSpace(specialization))
-            query = query.Where(t => t.Specialization != null && EF.Functions.Like(t.Specialization, $"%{specialization.Trim()}%"));
+        {
+            var wanted = specialization.Trim().ToLowerInvariant();
+            query = query.Where(t => t.Specialization != null && t.Specialization.ToLower().Contains(wanted));
+        }
 
         var trainers = await query.OrderByDescending(t => t.RatingAverage).ToListAsync(ct);
         return Ok(trainers.Select(t => t.ToDto()).ToList());
@@ -146,8 +149,9 @@ public class MembersController : ControllerBase
 
         if (!string.IsNullOrWhiteSpace(search))
         {
-            var term = search.Trim();
-            query = query.Where(m => EF.Functions.Like(m.FullName, $"%{term}%") || EF.Functions.Like(m.Email, $"%{term}%"));
+            // Lower-cased comparison: PostgreSQL's LIKE is case-sensitive, SQLite's is not.
+            var term = search.Trim().ToLowerInvariant();
+            query = query.Where(m => m.FullName.ToLower().Contains(term) || m.Email.ToLower().Contains(term));
         }
 
         var members = await query.OrderBy(m => m.FullName).Take(200).ToListAsync(ct);
