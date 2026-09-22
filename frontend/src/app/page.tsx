@@ -29,9 +29,9 @@ const HERO_BULLETS = [
 
 const QUICK_STATS = [
   { icon: Timer, value: "24 / 7", label: "เปิดบริการตลอด 24 ชั่วโมง" },
-  { icon: Building2, value: "42 สาขา", label: "ครอบคลุมกรุงเทพและหัวเมือง" },
+  { icon: Building2, value: "6 สาขา", label: "ครอบคลุมกรุงเทพและหัวเมือง" },
   { icon: Dumbbell, value: "1,000+", label: "เครื่องออกกำลังกายระดับสากล" },
-  { icon: Users, value: "100+ โค้ช", label: "Certified ACE, NASM และ HYROX" },
+  { icon: Users, value: "6 โค้ช", label: "Certified ACE, NASM และ HYROX" },
 ];
 
 const EXPERIENCE = [
@@ -188,7 +188,7 @@ export default function LandingPage() {
               <div className="flex flex-wrap items-baseline gap-3">
                 <p className="font-display text-xl font-bold">ถึงเวลาฟิตกว่าเดิม</p>
                 <span className="rounded-lg bg-pulse-500 px-4 py-1.5 font-display text-lg font-bold tracking-tight">
-                  เริ่มต้นเพียง 1,550 บ. / เดือน*
+                  เริ่มต้นเพียง 3,990 บ. / เดือน*
                 </span>
               </div>
 
@@ -202,8 +202,8 @@ export default function LandingPage() {
               </ul>
 
               <p className="inline-block rounded-lg bg-white/10 px-3.5 py-2 text-xs text-ash-500 backdrop-blur">
-                <span className="font-bold text-pulse-200">*เมื่อสมัครสมาชิก TP Fitness 12 เดือน</span>{" "}
-                ภายในระยะเวลาโปรโมชัน
+                <span className="font-bold text-pulse-200">*แพ็กเกจ Stay Fit Monthly</span>{" "}
+                สมัครออนไลน์วันนี้ รับสิทธิ์ทันที
               </p>
 
               <div className="flex flex-wrap gap-3 pt-2">
